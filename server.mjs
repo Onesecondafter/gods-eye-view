@@ -81,10 +81,16 @@ function deny(res) {
 // ---------------------------------------------------------------------------
 // 3. reverse proxy  (HTTP)
 // ---------------------------------------------------------------------------
+// Vite 6's dev server rejects any Host header not in server.allowedHosts.
+// Behind this proxy the browser's Host is the public Render domain, which Vite
+// doesn't know — so rewrite it to loopback (always allowed) before forwarding.
+const INNER_HOST = `127.0.0.1:${INNER_PORT}`;
+
 const proxy = http.createServer((req, res) => {
   if (!authed(req)) return deny(res);
+  const headers = { ...req.headers, host: INNER_HOST };
   const upstream = http.request(
-    { host: '127.0.0.1', port: INNER_PORT, method: req.method, path: req.url, headers: req.headers },
+    { host: '127.0.0.1', port: INNER_PORT, method: req.method, path: req.url, headers },
     (up) => { res.writeHead(up.statusCode || 502, up.headers); up.pipe(res); },
   );
   upstream.on('error', () => { if (!res.headersSent) res.writeHead(502); res.end('Upstream unavailable.'); });
@@ -97,9 +103,10 @@ const proxy = http.createServer((req, res) => {
 proxy.on('upgrade', (req, socket, head) => {
   if (!authed(req)) { socket.write('HTTP/1.1 401 Unauthorized\r\nWWW-Authenticate: Basic realm="God\'s Eye View"\r\n\r\n'); socket.destroy(); return; }
   const up = net.connect(INNER_PORT, '127.0.0.1', () => {
+    const fwd = { ...req.headers, host: INNER_HOST };
     up.write(
       `${req.method} ${req.url} HTTP/1.1\r\n` +
-      Object.entries(req.headers).map(([k, v]) => `${k}: ${v}`).join('\r\n') +
+      Object.entries(fwd).map(([k, v]) => `${k}: ${v}`).join('\r\n') +
       '\r\n\r\n',
     );
     if (head && head.length) up.write(head);
