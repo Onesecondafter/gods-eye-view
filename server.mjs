@@ -39,6 +39,7 @@ const vite = spawn(
   process.execPath,
   [
     './node_modules/vite/bin/vite.js',
+    '--config', './vite.hosted.config.mjs',
     '--host', '127.0.0.1',
     '--port', String(INNER_PORT),
     '--strictPort',
