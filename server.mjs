@@ -88,6 +88,13 @@ function deny(res) {
 const INNER_HOST = `127.0.0.1:${INNER_PORT}`;
 
 const proxy = http.createServer((req, res) => {
+  // Unauthenticated health check — Render polls this and restarts the instance
+  // if it doesn't get a 2xx. The rest of the site stays behind Basic Auth.
+  if (req.url === '/healthz') {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('ok');
+    return;
+  }
   if (!authed(req)) return deny(res);
   const headers = { ...req.headers, host: INNER_HOST };
   const upstream = http.request(
