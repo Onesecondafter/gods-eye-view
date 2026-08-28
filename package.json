@@ -33,6 +33,7 @@
   ],
   "scripts": {
     "dev": "vite",
+    "start": "node server.mjs",
     "dev:secure": "./scripts/dev-secure.sh",
     "opensky:import": "./scripts/opensky-import-client.sh",
     "build": "vite build",
@@ -55,5 +56,8 @@
     "vite": "^6.0.0",
     "vite-plugin-cesium": "^1.2.23",
     "ws": "^8.21.0"
+  },
+  "allowScripts": {
+    "esbuild@0.25.12": true
   }
 }

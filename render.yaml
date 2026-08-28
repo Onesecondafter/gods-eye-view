@@ -1,0 +1,39 @@
+# Render Blueprint for the hosted God's Eye View.
+#
+# Create via New + -> Blueprint (point at this repo), OR by hand:
+#   New + -> Web Service -> this repo -> Runtime "Docker" -> the rest matches below.
+#
+# It runs the Vite dev server behind a Basic Auth reverse proxy (server.mjs), so
+# ALL the live-data proxies work. Memory: Cesium builds are heavy — use at least
+# a 1 GB instance (the "standard" plan) or it may OOM on first tile load.
+
+services:
+  - type: web
+    name: godseye-view
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: standard          # 1 GB RAM. "starter" (512 MB) tends to OOM here.
+    autoDeploy: true
+    healthCheckPath: /       # returns 401 until you send credentials — Render treats any <500 as healthy
+    envVars:
+      # --- gate (set real values in the dashboard) ---
+      - key: GODSEYE_USER
+        sync: false
+      - key: GODSEYE_PASS
+        sync: false
+      # --- data keys (set values in the dashboard, never commit) ---
+      - key: GOOGLE_MAPS_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: AISSTREAM_API_KEY
+        sync: false
+      - key: FIRMS_MAP_KEY
+        sync: false
+      # --- non-secret config ---
+      - key: OPENSKY_AUTH_MODE
+        value: anon
+      - key: NODE_ENV
+        value: development
+      # - key: TOMTOM_API_KEY      # optional: real traffic; keyless runs in simulation
+      #   sync: false
