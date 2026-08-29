@@ -1,20 +1,21 @@
-# Render Blueprint for the hosted God's Eye View.
+# Render Blueprint for the LEAN God's Eye View.
 #
-# Create via New + -> Blueprint (point at this repo), OR by hand:
-#   New + -> Web Service -> this repo -> Runtime "Docker" -> the rest matches below.
+# Serves the pre-built static app + reuses the /api/* proxy plugins via
+# server-lean.mjs. No Vite dev server at runtime, so the $7 / 512 MB Starter
+# plan is enough (the old server.mjs needed the $25 / 2 GB plan).
 #
-# It runs the Vite dev server behind a Basic Auth reverse proxy (server.mjs), so
-# ALL the live-data proxies work. Memory: Cesium builds are heavy — use at least
-# a 1 GB instance (the "standard" plan) or it may OOM on first tile load.
+# By hand: New + -> Web Service -> this repo -> branch feat/lean ->
+#   Runtime "Docker" -> Plan "Starter" -> Health Check Path "/healthz".
 
 services:
   - type: web
     name: godseye-view
     runtime: docker
     dockerfilePath: ./Dockerfile
-    plan: standard          # 1 GB RAM. "starter" (512 MB) tends to OOM here.
-    autoDeploy: true
-    healthCheckPath: /       # returns 401 until you send credentials — Render treats any <500 as healthy
+    branch: feat/lean
+    plan: starter            # 512 MB — no Vite dev server at runtime
+    autoDeploy: false
+    healthCheckPath: /healthz
     envVars:
       # --- gate (set real values in the dashboard) ---
       - key: GODSEYE_USER
@@ -33,7 +34,9 @@ services:
       # --- non-secret config ---
       - key: OPENSKY_AUTH_MODE
         value: anon
+      - key: OPENAI_REALTIME_VOICE
+        value: ballad
       - key: NODE_ENV
-        value: development
+        value: production
       # - key: TOMTOM_API_KEY      # optional: real traffic; keyless runs in simulation
       #   sync: false
