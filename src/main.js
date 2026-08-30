@@ -31,6 +31,7 @@ import {
   releaseContinuousRender,
 } from './renderGovernor.js';
 import { installScopeMask } from './scopeMask.js';
+import { installTilesetRenderHold } from './tilesetRenderHold.js';
 import { initFirstRunExperience } from './firstRunExperience.js';
 
 initLogoGaze();
@@ -275,6 +276,12 @@ async function init() {
     // nothing animates per frame. Installed AFTER every module above has had
     // its chance to register pre-install holds. (perf wave 2)
     installRenderGovernor(viewer);
+
+    // Keep the render loop alive while Google 3D Tiles stream in. Without this
+    // the governor drops to idle mid-stream on a cold load and the map freezes
+    // as one coarse blurry tile until the camera is nudged. See
+    // src/tilesetRenderHold.js for the full diagnosis.
+    installTilesetRenderHold(viewer, tileset);
 
     // The explicit scope mask replaces the emergent six-pass artifact —
     // see src/scopeMask.js. Installed before the UI so the DISPLAY-rail
